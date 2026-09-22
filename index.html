@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Venice Coffee</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --paper: #EAE2D0;
+    --card: #F6F1E5;
+    --ink: #2A1D14;
+    --ink-soft: #6B5D4F;
+    --coffee: #4A2F23;
+    --coffee-deep: #2E1B12;
+    --copper: #A6693F;
+    --sage: #6E7C54;
+    --stamp-empty: #D9CDB3;
+    --line: #CDBFA2;
+    --danger: #A64F3F;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh;
+    background: var(--paper);
+    background-image: radial-gradient(circle at 1px 1px, rgba(74,47,35,0.06) 1px, transparent 0);
+    background-size:18px 18px;
+    color: var(--ink);
+    font-family:'Vazirmatn',sans-serif;
+    display:flex; justify-content:center;
+  }
+  .app{ width:100%; max-width:440px; min-height:100vh; display:flex; flex-direction:column; position:relative; }
+
+  header{
+    padding:16px 18px 12px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:8px; }
+  .brand .cup{ font-size:22px; }
+  .brand .name{ font-weight:800; font-size:17px; color:var(--coffee-deep); }
+  .gear{ background:none; border:none; font-size:19px; cursor:pointer; color:var(--ink-soft); }
+
+  main{ flex:1; padding:18px 18px 90px; overflow-y:auto; }
+  .screen{ display:none; animation: fadein .25s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  h2{ font-size:16px; font-weight:800; color:var(--coffee-deep); margin:0 0 14px; }
+  .muted{ color:var(--ink-soft); font-size:13px; }
+
+  .tile{
+    background:var(--card); border:1.5px solid var(--line); border-radius:4px;
+    padding:16px; margin-bottom:12px;
+  }
+  .home-stats{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .stat{ background:var(--card); border:1.5px solid var(--line); border-radius:4px; padding:14px; text-align:center; }
+  .stat .n{ font-size:20px; font-weight:800; color:var(--coffee-deep); }
+  .stat .l{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+
+  .shortcuts{ display:flex; flex-direction:column; gap:8px; }
+  .shortcut{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--card); border:1.5px solid var(--line); border-radius:4px;
+    padding:13px 14px; cursor:pointer; font-size:14px; font-weight:600;
+  }
+  .shortcut span.ic{ font-size:16px; }
+
+  /* menu */
+  .cat{ font-size:13px; font-weight:700; color:var(--copper); margin:18px 0 8px; }
+  .cat:first-child{ margin-top:0; }
+  .item{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 0; border-bottom:1px solid var(--line);
+  }
+  .item .info .nm{ font-size:14px; font-weight:600; }
+  .item .info .pr{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+  .qty{ display:flex; align-items:center; gap:8px; }
+  .qty button{
+    width:26px; height:26px; border-radius:50%; border:1.5px solid var(--copper);
+    background:var(--card); color:var(--copper); font-size:15px; font-weight:700; cursor:pointer;
+  }
+  .qty .n{ min-width:16px; text-align:center; font-weight:700; font-size:14px; }
+
+  .cart-bar{
+    position:fixed; bottom:64px; left:0; right:0;
+    max-width:440px; margin:0 auto;
+    background:var(--coffee); color:var(--paper);
+    padding:12px 18px; display:flex; justify-content:space-between; align-items:center;
+    border-radius:6px 6px 0 0; cursor:pointer;
+  }
+  .cart-bar.hidden{ display:none; }
+  .cart-bar .txt{ font-size:13.5px; font-weight:700; }
+
+  .btn{
+    width:100%; padding:13px; border-radius:3px; border:none; font-family:inherit;
+    font-size:15px; font-weight:700; cursor:pointer; transition:transform .15s;
+  }
+  .btn:active{ transform:scale(.98); }
+  .btn-primary{ background:var(--coffee); color:var(--paper); }
+  .btn-sage{ background:var(--sage); color:var(--paper); }
+  .btn-outline{ background:none; border:1.5px solid var(--coffee); color:var(--coffee); }
+  .btn:disabled{ opacity:.5; }
+
+  input, textarea{
+    width:100%; font-family:inherit; font-size:14px; padding:11px 12px;
+    border:1.5px solid var(--line); border-radius:3px; background:var(--card); color:var(--ink);
+    margin-bottom:10px; outline:none;
+  }
+  input:focus, textarea:focus{ border-color:var(--copper); }
+  label{ font-size:12.5px; color:var(--ink-soft); margin-bottom:4px; display:block; }
+
+  /* loyalty */
+  .lcard{ background:var(--card); border:1.5px solid var(--line); border-radius:4px; padding:22px 18px; position:relative; margin-bottom:16px; }
+  .lcard::before,.lcard::after{ content:""; position:absolute; width:14px; height:14px; background:var(--paper); border:1.5px solid var(--line); border-radius:50%; top:50%; transform:translateY(-50%); }
+  .lcard::before{ left:-8px; } .lcard::after{ right:-8px; }
+  .stamps{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px; }
+  .stamp{
+    aspect-ratio:1; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    border:1.5px dashed var(--stamp-empty); color:var(--stamp-empty); font-size:16px;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1), background .3s, border-color .3s, color .3s;
+  }
+  .stamp.filled{ border-style:solid; border-color:var(--copper); background:var(--copper); color:var(--card); transform:scale(1.05); }
+  .stamp.reward{ border-color:var(--sage); color:var(--sage); }
+  .stamp.reward.filled{ background:var(--sage); border-color:var(--sage); color:var(--card); }
+
+  .hrow{ display:flex; justify-content:space-between; font-size:13px; border-bottom:1px solid var(--line); padding:7px 0; }
+  .hrow .date{ color:var(--ink-soft); }
+
+  .stars{ display:flex; gap:6px; justify-content:center; margin-bottom:16px; }
+  .star{ font-size:30px; color:var(--stamp-empty); cursor:pointer; transition:color .15s, transform .15s; }
+  .star.on{ color:var(--copper); transform:scale(1.1); }
+
+  .review{ border-bottom:1px solid var(--line); padding:10px 0; }
+  .review .rt{ color:var(--copper); font-size:13px; margin-bottom:3px; }
+  .review .cm{ font-size:13.5px; }
+  .review .dt{ font-size:11.5px; color:var(--ink-soft); margin-top:3px; }
+
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; max-width:440px; margin:0 auto;
+    background:var(--card); border-top:1.5px solid var(--line);
+    display:flex;
+  }
+  .nav-btn{
+    flex:1; background:none; border:none; padding:10px 4px 12px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--ink-soft); font-family:inherit; font-size:11px;
+  }
+  .nav-btn .ic{ font-size:18px; }
+  .nav-btn.active{ color:var(--coffee-deep); font-weight:700; }
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(42,29,20,.55); display:none;
+    align-items:center; justify-content:center; z-index:20; padding:20px;
+  }
+  .modal-bg.show{ display:flex; }
+  .modal{ background:var(--card); border-radius:6px; padding:20px; width:100%; max-width:340px; }
+  .modal h3{ margin:0 0 12px; font-size:15px; color:var(--coffee-deep); }
+  .modal-actions{ display:flex; gap:8px; margin-top:8px; }
+
+  .close-x{ position:absolute; top:14px; left:14px; background:none; border:none; font-size:18px; color:var(--ink-soft); cursor:pointer; }
+
+  .toast{
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    background:var(--coffee-deep); color:var(--paper); padding:10px 18px; border-radius:20px;
+    font-size:13px; z-index:30; opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+  .toast.show{ opacity:1; }
+
+  .admin-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .admin-del{ background:none; border:none; color:var(--danger); cursor:pointer; font-size:16px; }
+  .shared-note{ font-size:11.5px; color:var(--ink-soft); margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="cup">☕</span><span class="name" id="shopname">Venice Coffee</span></div>
+    <button class="gear" onclick="openAdminLogin()">⚙</button>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="screen active" id="screen-home">
+      <h2>سلام! خوش اومدی ✨</h2>
+      <div class="home-stats">
+        <div class="stat"><div class="n" id="home-stamps">0</div><div class="l">مهر فعلی</div></div>
+        <div class="stat"><div class="n" id="home-balance">۰</div><div class="l">موجودی هدیه (تومان)</div></div>
+      </div>
+      <div class="shortcuts">
+        <div class="shortcut" onclick="goTo('menu')"><span>منو و سفارش</span><span class="ic">☕</span></div>
+        <div class="shortcut" onclick="goTo('loyalty')"><span>کارت وفاداری</span><span class="ic">🎟️</span></div>
+        <div class="shortcut" onclick="goTo('gift')"><span>کارت هدیه</span><span class="ic">🎁</span></div>
+        <div class="shortcut" onclick="goTo('reviews')"><span>ثبت نظر</span><span class="ic">⭐</span></div>
+      </div>
+    </section>
+
+    <!-- MENU -->
+    <section class="screen" id="screen-menu">
+      <h2>منو</h2>
+      <div id="menu-list"></div>
+    </section>
+
+    <!-- LOYALTY -->
+    <section class="screen" id="screen-loyalty">
+      <h2>کارت وفاداری</h2>
+      <div class="lcard">
+        <div class="muted" style="margin-bottom:10px;">هر ۹ قهوه، یکی مهمون ما</div>
+        <div class="stamps" id="stamps"></div>
+        <div class="muted" id="loyalty-status" style="text-align:center; margin-bottom:14px;"></div>
+        <button class="btn btn-primary" id="loyalty-btn" onclick="loyaltyAction()"></button>
+      </div>
+      <h2>تاریخچه</h2>
+      <div id="loyalty-history"></div>
+    </section>
+
+    <!-- GIFT -->
+    <section class="screen" id="screen-gift">
+      <h2>کارت هدیه</h2>
+      <div class="tile">
+        <div class="muted" style="margin-bottom:10px;">موجودی من: <strong id="gift-balance-txt">۰ تومان</strong></div>
+      </div>
+      <h2>ساخت کارت هدیه برای کسی دیگه</h2>
+      <label>مبلغ (تومان)</label>
+      <input type="number" id="gift-amount" placeholder="مثلاً ۲۰۰۰۰۰">
+      <button class="btn btn-primary" onclick="createGift()">ساخت کد هدیه</button>
+      <div id="gift-created" class="muted" style="margin-top:10px;"></div>
+
+      <h2 style="margin-top:22px;">استفاده از کد هدیه</h2>
+      <label>کد هدیه</label>
+      <input type="text" id="gift-code-input" placeholder="کد رو وارد کن">
+      <button class="btn btn-outline" onclick="redeemGift()">اعمال کد</button>
+    </section>
+
+    <!-- REVIEWS -->
+    <section class="screen" id="screen-reviews">
+      <h2>نظرت رو بگو</h2>
+      <div class="shared-note">نظرات بین همه کاربرای این اپ مشترکه و برای بقیه هم قابل دیدنه</div>
+      <div class="stars" id="stars"></div>
+      <textarea id="review-comment" rows="3" placeholder="تجربه‌ات رو بنویس (اختیاری)"></textarea>
+      <button class="btn btn-primary" onclick="submitReview()">ثبت نظر</button>
+      <h2 style="margin-top:22px;">نظرات اخیر</h2>
+      <div id="reviews-list"></div>
+    </section>
+  </main>
+
+  <div class="cart-bar hidden" id="cart-bar" onclick="goTo('order')">
+    <span class="txt" id="cart-txt"></span>
+    <span>مشاهده سفارش ←</span>
+  </div>
+
+  <!-- ORDER REVIEW SCREEN (overlay-ish, reuses screen system) -->
+  <section class="screen" id="screen-order" style="position:fixed; inset:0; top:60px; bottom:64px; background:var(--paper); padding:18px; overflow-y:auto; max-width:440px; margin:0 auto; z-index:15;">
+    <button class="close-x" onclick="closeOrder()">✕ بستن</button>
+    <h2 style="margin-top:26px;">سفارش من</h2>
+    <div id="order-items"></div>
+    <div class="tile" style="display:flex; justify-content:space-between; font-weight:700;">
+      <span>جمع کل</span><span id="order-total">۰ تومان</span>
+    </div>
+    <button class="btn btn-sage" onclick="submitOrder()">ثبت سفارش</button>
+    <div class="muted" style="margin-top:10px;">سفارش‌ها توی پنل مدیریت کافه دیده می‌شه — این یه لیست مشترکه، نه اعلان لحظه‌ای به پرسنل.</div>
+  </section>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="home" onclick="goTo('home')"><span class="ic">🏠</span>خانه</button>
+    <button class="nav-btn" data-tab="menu" onclick="goTo('menu')"><span class="ic">☕</span>منو</button>
+    <button class="nav-btn" data-tab="loyalty" onclick="goTo('loyalty')"><span class="ic">🎟️</span>وفاداری</button>
+    <button class="nav-btn" data-tab="gift" onclick="goTo('gift')"><span class="ic">🎁</span>هدیه</button>
+    <button class="nav-btn" data-tab="reviews" onclick="goTo('reviews')"><span class="ic">⭐</span>نظرات</button>
+  </nav>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div class="modal-bg" id="admin-login-modal">
+    <div class="modal">
+      <h3>ورود مدیر کافه</h3>
+      <input type="password" id="admin-pin" placeholder="رمز مدیریت (پیش‌فرض: 1234)">
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModal('admin-login-modal')">انصراف</button>
+        <button class="btn btn-primary" onclick="tryAdminLogin()">ورود</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="modal-bg" id="admin-panel-modal">
+    <div class="modal" style="max-width:400px; max-height:80vh; overflow-y:auto;">
+      <h3>پنل مدیریت</h3>
+      <div class="home-stats">
+        <div class="stat"><div class="n" id="admin-orders-count">۰</div><div class="l">سفارش‌ها</div></div>
+        <div class="stat"><div class="n" id="admin-reviews-count">۰</div><div class="l">نظرات</div></div>
+      </div>
+      <h3 style="margin-top:14px;">آخرین سفارش‌ها</h3>
+      <div id="admin-orders"></div>
+      <h3 style="margin-top:14px;">ویرایش منو</h3>
+      <div id="admin-menu"></div>
+      <label style="margin-top:10px;">افزودن آیتم جدید</label>
+      <input id="admin-new-name" placeholder="نام آیتم">
+      <input id="admin-new-cat" placeholder="دسته (مثلاً نوشیدنی گرم)">
+      <input id="admin-new-price" type="number" placeholder="قیمت (تومان)">
+      <button class="btn btn-outline" onclick="adminAddItem()">افزودن به منو</button>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="closeModal('admin-panel-modal')">بستن</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const REWARD_AT = 9;
+const ADMIN_PIN = '1234';
+
+let menu = [];
+let cart = {};
+let loyalty = { stamps:0, redeemed:0, history:[] };
+let giftBalance = 0;
+let myGiftCodes = [];
+let reviewsCache = [];
+let ordersFeedCache = [];
+let selectedStars = 5;
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function fmt(n){ return Number(n||0).toLocaleString('fa-IR'); }
+function fmtDate(){ return new Date().toLocaleDateString('fa-IR',{year:'numeric',month:'2-digit',day:'2-digit'}); }
+
+async function sGet(key, shared){ try{ const r = await window.storage.get(key, shared); return r ? JSON.parse(r.value) : null; }catch(e){ return null; } }
+async function sSet(key, val, shared){ try{ await window.storage.set(key, JSON.stringify(val), shared); }catch(e){ console.error('save failed', key, e); } }
+
+const DEFAULT_MENU = [
+  {id:1, cat:'نوشیدنی گرم', name:'اسپرسو', price:65000},
+  {id:2, cat:'نوشیدنی گرم', name:'آمریکانو', price:75000},
+  {id:3, cat:'نوشیدنی گرم', name:'کاپوچینو', price:95000},
+  {id:4, cat:'نوشیدنی گرم', name:'لاته', price:100000},
+  {id:5, cat:'نوشیدنی گرم', name:'موکا', price:110000},
+  {id:6, cat:'نوشیدنی سرد', name:'آیس لاته', price:110000},
+  {id:7, cat:'نوشیدنی سرد', name:'کلد برو', price:120000},
+  {id:8, cat:'شیرینی', name:'کروسان', price:85000},
+  {id:9, cat:'شیرینی', name:'کیک شکلاتی', price:120000},
+];
+
+async function init(){
+  menu = await sGet('menu:items', true);
+  if(!menu){ menu = DEFAULT_MENU; await sSet('menu:items', menu, true); }
+
+  loyalty = (await sGet('loyalty:main', false)) || { stamps:0, redeemed:0, history:[] };
+  giftBalance = (await sGet('gift:balance', false)) || 0;
+  myGiftCodes = (await sGet('gift:mycreated', false)) || [];
+
+  renderHome();
+  renderMenu();
+  renderLoyalty();
+  renderGiftScreen();
+  await renderReviews();
+  buildStars();
+}
+
+function goTo(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-order').classList.remove('active');
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  if(tab==='home') renderHome();
+  window.scrollTo(0,0);
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  document.getElementById('home-stamps').textContent = loyalty.stamps + '/' + REWARD_AT;
+  document.getElementById('home-balance').textContent = fmt(giftBalance);
+}
+
+/* ---------- MENU / CART ---------- */
+function renderMenu(){
+  const cats = [...new Set(menu.map(m=>m.cat))];
+  let html = '';
+  cats.forEach(cat=>{
+    html += `<div class="cat">${cat}</div>`;
+    menu.filter(m=>m.cat===cat).forEach(m=>{
+      const q = cart[m.id] || 0;
+      html += `
+        <div class="item">
+          <div class="info"><div class="nm">${m.name}</div><div class="pr">${fmt(m.price)} تومان</div></div>
+          <div class="qty">
+            <button onclick="changeQty(${m.id},-1)">−</button>
+            <span class="n">${q}</span>
+            <button onclick="changeQty(${m.id},1)">+</button>
+          </div>
+        </div>`;
+    });
+  });
+  document.getElementById('menu-list').innerHTML = html;
+  updateCartBar();
+}
+
+function changeQty(id, delta){
+  cart[id] = Math.max(0, (cart[id]||0) + delta);
+  if(cart[id]===0) delete cart[id];
+  renderMenu();
+}
+
+function cartTotal(){
+  return Object.entries(cart).reduce((sum,[id,q]) => {
+    const item = menu.find(m=>m.id==id);
+    return sum + (item ? item.price*q : 0);
+  }, 0);
+}
+function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
+
+function updateCartBar(){
+  const bar = document.getElementById('cart-bar');
+  const count = cartCount();
+  if(count===0){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  document.getElementById('cart-txt').textContent = `${count} آیتم — ${fmt(cartTotal())} تومان`;
+}
+
+function closeOrder(){
+  document.getElementById('screen-order').classList.remove('active');
+}
+
+function openOrderScreen(){
+  let html = '';
+  Object.entries(cart).forEach(([id,q])=>{
+    const item = menu.find(m=>m.id==id);
+    if(!item) return;
+    html += `<div class="hrow"><span>${item.name} × ${q}</span><span>${fmt(item.price*q)} تومان</span></div>`;
+  });
+  document.getElementById('order-items').innerHTML = html || '<div class="muted">سبد خالیه</div>';
+  document.getElementById('order-total').textContent = fmt(cartTotal()) + ' تومان';
+  document.getElementById('screen-order').classList.add('active');
+}
+// override goTo('order') to open the overlay
+const _goTo = goTo;
+goTo = function(tab){ if(tab==='order'){ openOrderScreen(); return; } _goTo(tab); };
+
+async function submitOrder(){
+  if(cartCount()===0){ toast('سبد خالیه'); return; }
+  const order = { id: Date.now(), items: Object.entries(cart).map(([id,q])=>{
+      const item = menu.find(m=>m.id==id);
+      return { name:item.name, qty:q, price:item.price };
+    }), total: cartTotal(), date: fmtDate() };
+
+  const myOrders = (await sGet('orders:mine', false)) || [];
+  myOrders.unshift(order);
+  await sSet('orders:mine', myOrders, false);
+
+  const feed = (await sGet('orders:feed', true)) || [];
+  feed.unshift(order);
+  await sSet('orders:feed', feed, true);
+
+  cart = {};
+  closeOrder();
+  renderMenu();
+  toast('سفارش ثبت شد ✓');
+}
+
+/* ---------- LOYALTY ---------- */
+function renderLoyalty(){
+  const el = document.getElementById('stamps');
+  let html = '';
+  for(let i=0;i<REWARD_AT;i++){
+    html += `<div class="stamp ${i<loyalty.stamps?'filled':''}">${i<loyalty.stamps?'☕':''}</div>`;
+  }
+  html += `<div class="stamp reward ${loyalty.stamps>=REWARD_AT?'filled':''}">🎁</div>`;
+  el.innerHTML = html;
+
+  const statusEl = document.getElementById('loyalty-status');
+  const btn = document.getElementById('loyalty-btn');
+  if(loyalty.stamps >= REWARD_AT){
+    statusEl.textContent = 'یک قهوه‌ی رایگان آماده‌ی دریافته 🎉';
+    btn.textContent = 'دریافت قهوه‌ی رایگان';
+    btn.className = 'btn btn-sage';
+  } else {
+    statusEl.textContent = `${REWARD_AT - loyalty.stamps} قهوه‌ی دیگه تا یکی مهمون ما`;
+    btn.textContent = 'ثبت قهوه‌ی امروز';
+    btn.className = 'btn btn-primary';
+  }
+
+  const hist = document.getElementById('loyalty-history');
+  hist.innerHTML = loyalty.history.length
+    ? loyalty.history.slice(0,15).map(h=>`<div class="hrow"><span>${h.type==='reward'?'قهوه‌ی رایگان دریافت شد':'یک قهوه ثبت شد'}</span><span class="date">${h.date}</span></div>`).join('')
+    : '<div class="muted">هنوز بازدیدی ثبت نشده</div>';
+}
+
+async function loyaltyAction(){
+  if(loyalty.stamps >= REWARD_AT){
+    loyalty.redeemed += 1;
+    loyalty.stamps = 0;
+    loyalty.history.unshift({type:'reward', date:fmtDate()});
+  } else {
+    loyalty.stamps += 1;
+    loyalty.history.unshift({type:'coffee', date:fmtDate()});
+  }
+  await sSet('loyalty:main', loyalty, false);
+  renderLoyalty();
+  renderHome();
+}
+
+/* ---------- GIFT CARDS ---------- */
+function renderGiftScreen(){
+  document.getElementById('gift-balance-txt').textContent = fmt(giftBalance) + ' تومان';
+}
+
+function genCode(){
+  return 'VC-' + Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+async function createGift(){
+  const amt = Number(document.getElementById('gift-amount').value);
+  if(!amt || amt<=0){ toast('مبلغ رو درست وارد کن'); return; }
+  const code = genCode();
+  const registry = (await sGet('gift:registry', true)) || {};
+  registry[code] = amt;
+  await sSet('gift:registry', registry, true);
+
+  myGiftCodes.unshift({code, amount:amt, date:fmtDate()});
+  await sSet('gift:mycreated', myGiftCodes, false);
+
+  document.getElementById('gift-created').innerHTML = `کد ساخته شد: <strong>${code}</strong> — این کد رو به فرد موردنظر بده`;
+  document.getElementById('gift-amount').value = '';
+}
+
+async function redeemGift(){
+  const code = document.getElementById('gift-code-input').value.trim().toUpperCase();
+  if(!code){ return; }
+  const registry = (await sGet('gift:registry', true)) || {};
+  if(!registry[code]){ toast('کد معتبر نیست یا قبلاً استفاده شده'); return; }
+  giftBalance += registry[code];
+  delete registry[code];
+  await sSet('gift:registry', registry, true);
+  await sSet('gift:balance', giftBalance, false);
+  renderGiftScreen();
+  renderHome();
+  document.getElementById('gift-code-input').value = '';
+  toast('کد اعمال شد ✓');
+}
+
+/* ---------- REVIEWS ---------- */
+function buildStars(){
+  const el = document.getElementById('stars');
+  el.innerHTML = [1,2,3,4,5].map(i=>`<span class="star ${i<=selectedStars?'on':''}" onclick="setStars(${i})">★</span>`).join('');
+}
+function setStars(i){ selectedStars = i; buildStars(); }
+
+async function submitReview(){
+  const comment = document.getElementById('review-comment').value.trim();
+  const feed = (await sGet('reviews:feed', true)) || [];
+  feed.unshift({ stars:selectedStars, comment, date:fmtDate() });
+  await sSet('reviews:feed', feed, true);
+  document.getElementById('review-comment').value = '';
+  selectedStars = 5; buildStars();
+  await renderReviews();
+  toast('نظرت ثبت شد، ممنون 🙏');
+}
+
+async function renderReviews(){
+  const feed = (await sGet('reviews:feed', true)) || [];
+  reviewsCache = feed;
+  const el = document.getElementById('reviews-list');
+  el.innerHTML = feed.length
+    ? feed.slice(0,20).map(r=>`
+        <div class="review">
+          <div class="rt">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+          ${r.comment ? `<div class="cm">${r.comment}</div>` : ''}
+          <div class="dt">${r.date}</div>
+        </div>`).join('')
+    : '<div class="muted">هنوز نظری ثبت نشده</div>';
+}
+
+/* ---------- ADMIN ---------- */
+function openAdminLogin(){ document.getElementById('admin-login-modal').classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+async function tryAdminLogin(){
+  const pin = document.getElementById('admin-pin').value;
+  if(pin !== ADMIN_PIN){ toast('رمز اشتباهه'); return; }
+  document.getElementById('admin-pin').value = '';
+  closeModal('admin-login-modal');
+  await openAdminPanel();
+}
+
+async function openAdminPanel(){
+  const feed = (await sGet('orders:feed', true)) || [];
+  const reviews = (await sGet('reviews:feed', true)) || [];
+  ordersFeedCache = feed;
+  document.getElementById('admin-orders-count').textContent = fmt(feed.length);
+  document.getElementById('admin-reviews-count').textContent = fmt(reviews.length);
+
+  document.getElementById('admin-orders').innerHTML = feed.length
+    ? feed.slice(0,10).map(o=>`<div class="admin-row"><span>${o.items.map(i=>i.name+'×'+i.qty).join('، ')}</span><span>${fmt(o.total)}ت</span></div>`).join('')
+    : '<div class="muted">سفارشی ثبت نشده</div>';
+
+  renderAdminMenu();
+  document.getElementById('admin-panel-modal').classList.add('show');
+}
+
+function renderAdminMenu(){
+  document.getElementById('admin-menu').innerHTML = menu.map(m=>`
+    <div class="admin-row">
+      <span>${m.name} — ${fmt(m.price)}ت</span>
+      <button class="admin-del" onclick="adminDeleteItem(${m.id})">✕</button>
+    </div>`).join('');
+}
+
+async function adminAddItem(){
+  const name = document.getElementById('admin-new-name').value.trim();
+  const cat = document.getElementById('admin-new-cat').value.trim() || 'سایر';
+  const price = Number(document.getElementById('admin-new-price').value);
+  if(!name || !price){ toast('نام و قیمت رو وارد کن'); return; }
+  const id = Date.now();
+  menu.push({id, cat, name, price});
+  await sSet('menu:items', menu, true);
+  document.getElementById('admin-new-name').value='';
+  document.getElementById('admin-new-cat').value='';
+  document.getElementById('admin-new-price').value='';
+  renderAdminMenu();
+  renderMenu();
+  toast('به منو اضافه شد');
+}
+
+async function adminDeleteItem(id){
+  menu = menu.filter(m=>m.id!==id);
+  await sSet('menu:items', menu, true);
+  renderAdminMenu();
+  renderMenu();
+}
+
+init();
+</script>
+</body>
+</html>
